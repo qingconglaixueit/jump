@@ -1,4 +1,4 @@
-import { _decorator, Component, Vec3, EventMouse, input, Input, Animation } from "cc";
+import { _decorator, Component, Vec3, EventMouse, input, Input, Animation, EventTouch, Node, UITransform, view } from "cc";
 const { ccclass, property } = _decorator;
 
 export const BLOCK_SIZE = 40;
@@ -7,34 +7,53 @@ export const BLOCK_SIZE = 40;
 export class PlayerController extends Component {
 
     @property(Animation)
-    BodyAnim:Animation = null;
+    BodyAnim: Animation = null;
 
     private _startJump: boolean = false;
     private _jumpStep: number = 0;
     private _curJumpTime: number = 0;
-    private _jumpTime: number = 0.1;
+    private _jumpTime: number = 0.3;
     private _curJumpSpeed: number = 0;
     private _curPos: Vec3 = new Vec3();
     private _deltaPos: Vec3 = new Vec3(0, 0, 0);
-    private _targetPos: Vec3 = new Vec3();   
-    private _curMoveIndex: number = 0;
-    start () {
+    private _targetPos: Vec3 = new Vec3();
+    private _curMoveIndex = 0;
+
+    @property(Node)
+    leftTouch: Node = null;
+
+    @property(Node)
+    rightTouch: Node = null;
+
+
+    start() {
         //input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
     }
 
     setInputActive(active: boolean) {
         if (active) {
-            input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+            //input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+            this.leftTouch.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
+            this.rightTouch.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
         } else {
-            input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+            //input.off(Input.EventType.MOUSE_UP, this.onMouseUp, this);
+            this.leftTouch.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+            this.rightTouch.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
         }
     }
 
     reset() {
         this._curMoveIndex = 0;
-        this.node.getPosition(this._curPos);
-        this._targetPos.set(0,0,0);
-    }   
+    }
+
+    onTouchStart(event: EventTouch) {
+        const target = event.target as Node;        
+        if (target?.name == 'LeftTouch') {
+            this.jumpByStep(1);
+        } else {
+            this.jumpByStep(2);
+        }
+    }
 
     onMouseUp(event: EventMouse) {
         if (event.getButton() === 0) {
@@ -57,10 +76,10 @@ export class PlayerController extends Component {
         const state = this.BodyAnim.getState(clipName);
         this._jumpTime = state.duration;
 
-        this._curJumpSpeed = this._jumpStep * BLOCK_SIZE/ this._jumpTime;
+        this._curJumpSpeed = this._jumpStep * BLOCK_SIZE / this._jumpTime;
         this.node.getPosition(this._curPos);
-        Vec3.add(this._targetPos, this._curPos, new Vec3(this._jumpStep* BLOCK_SIZE, 0, 0));  
-        
+        Vec3.add(this._targetPos, this._curPos, new Vec3(this._jumpStep * BLOCK_SIZE, 0, 0));
+
         if (this.BodyAnim) {
             if (step === 1) {
                 this.BodyAnim.play('OneStep');
@@ -72,19 +91,20 @@ export class PlayerController extends Component {
         this._curMoveIndex += step;
     }
 
-    
+
     onOnceJumpEnd() {
         this.node.emit('JumpEnd', this._curMoveIndex);
     }
-   
-    update (deltaTime: number) {
+
+    update(deltaTime: number) {
+
         if (this._startJump) {
             this._curJumpTime += deltaTime;
             if (this._curJumpTime > this._jumpTime) {
                 // end
                 this.node.setPosition(this._targetPos);
-                this._startJump = false;   
-                this.onOnceJumpEnd();           
+                this._startJump = false;
+                this.onOnceJumpEnd();
             } else {
                 // tween
                 this.node.getPosition(this._curPos);
