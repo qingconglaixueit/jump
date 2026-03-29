@@ -1,4 +1,4 @@
-import { _decorator, CCInteger, Component, instantiate, Label, math, Node, Prefab, Vec3 } from 'cc';
+import { _decorator, CCInteger, Component, instantiate, Label, math, Node, Prefab, Vec3, AudioSource } from 'cc';
 import { BLOCK_SIZE, PlayerController } from './PlayerController';
 const { ccclass, property } = _decorator;
 
@@ -29,6 +29,9 @@ export class GameManager extends Component {
     @property({ type: Label })
     public stepsLabel: Label | null = null;
 
+    @property(AudioSource)
+    audioSource: AudioSource = null;
+
     start() {
         this.setCurState(GameState.GS_INIT);
         this.playerCtrl?.node.on('JumpEnd', this.onPlayerJumpEnd, this);
@@ -45,6 +48,13 @@ export class GameManager extends Component {
             this.playerCtrl.setInputActive(false);
             this.playerCtrl.node.setPosition(Vec3.ZERO);
             this.playerCtrl.reset();
+        }
+    }
+
+
+    playSound() {
+        if (this.audioSource) {
+            this.audioSource.play();
         }
     }
 
@@ -120,6 +130,7 @@ export class GameManager extends Component {
     checkResult(moveIndex: number) {
         if (moveIndex < this.roadLength) {
             if (this._road[moveIndex] == BlockType.BT_NONE) {   //跳到了空方块上
+                this.playSound();
                 this.setCurState(GameState.GS_INIT);
             }
         } else {    // 跳过了最大长度            

@@ -1,4 +1,4 @@
-import { _decorator, Component, Vec3, EventMouse, input, Input, Animation, EventTouch, Node, UITransform, view } from "cc";
+import { _decorator, Component, Vec3, EventMouse, input, Input,AudioSource, Animation, EventTouch, Node, UITransform, view } from "cc";
 const { ccclass, property } = _decorator;
 
 export const BLOCK_SIZE = 40;
@@ -25,7 +25,15 @@ export class PlayerController extends Component {
     @property(Node)
     rightTouch: Node = null;
 
+    @property(AudioSource)
+    audioSource: AudioSource = null;
 
+
+    playSound() {
+        if (this.audioSource) {
+            this.audioSource.play();
+        }
+    }
     start() {
         //input.on(Input.EventType.MOUSE_UP, this.onMouseUp, this);
     }
@@ -47,6 +55,7 @@ export class PlayerController extends Component {
     }
 
     onTouchStart(event: EventTouch) {
+        this.playSound();
         const target = event.target as Node;        
         if (target?.name == 'LeftTouch') {
             this.jumpByStep(1);
@@ -56,6 +65,7 @@ export class PlayerController extends Component {
     }
 
     onMouseUp(event: EventMouse) {
+
         if (event.getButton() === 0) {
             this.jumpByStep(1);
         } else if (event.getButton() === 2) {
